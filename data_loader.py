@@ -21,14 +21,16 @@ class DataLoader(object):
         self.train_data = None
         self.valid_data = None
         self.test_data = None
+        self.label_names = None
 
     def load_data(self, set_type):
         """
         load data from bytes files
-        :param set_type: 'train'/'valid'/'test'.[str]
+        :param set_type: 'train'/'valid'/'test'/'label_names'.[str]
         :return:
         """
-        assert set_type in ['train', 'valid', 'test'], "parameter set_type should be in ['train'/'valid'/'test']"
+        assert set_type in ['train', 'valid', 'test', 'label_names'], \
+            "parameter set_type should be in ['train'/'valid'/'test']"
         # load training data
         if set_type == 'train':
             self.train_data = {'data': np.zeros(shape=[50000, 32, 32, 3], dtype=np.float32),
@@ -39,11 +41,11 @@ class DataLoader(object):
                     data_batch = (pickle.load(fr, encoding='bytes'))
                 # normalization
                 normal_train_data = self.normalization(
-                    data_batch[b'data'].reshape(10000, 3, 32, 32).transpose([0, 2, 3, 1]))
+                    data_batch[b'data'].reshape(10000, 3, 32, 32).transpose([0, 3, 2, 1]))
                 self.train_data['data'][(i - 1) * 10000:i * 10000] = normal_train_data
                 self.train_data['labels'][(i - 1) * 10000:i * 10000] = self.one_hot(data_batch[b'labels'],
                                                                                     self.num_classes)
-        else:
+        elif set_type in ['valid', 'test']:
             test_batch_path = os.path.join(self.data_path, "test_batch")
             with open(test_batch_path, 'rb') as fr:
                 test_batch = pickle.load(fr, encoding='bytes')
@@ -51,16 +53,21 @@ class DataLoader(object):
             if set_type == 'valid':
                 self.valid_data = dict()
                 normal_valid_data = self.normalization(
-                    test_batch[b'data'][0:self.valid_size].reshape(self.valid_size, 3, 32, 32).transpose([0, 2, 3, 1]))
+                    test_batch[b'data'][0:self.valid_size].reshape(self.valid_size, 3, 32, 32).transpose([0, 3, 2, 1]))
                 self.valid_data['data'] = np.float32(normal_valid_data)
                 self.valid_data['labels'] = self.one_hot(test_batch[b'labels'][0:self.valid_size], self.num_classes)
             # load testing data
             else:
                 self.test_data = dict()
-                normal_test_data = (test_batch[b'data'].reshape(10000, 3, 32, 32).transpose([0, 2, 3, 1]))
+                normal_test_data = (test_batch[b'data'].reshape(10000, 3, 32, 32).transpose([0, 3, 2, 1]))
                 self.test_data['data'] = np.float32(normal_test_data)
                 self.test_data['labels'] = self.one_hot(test_batch[b'labels'], self.num_classes)
             del test_batch
+        else:
+            label_names_path = os.path.join(self.data_path, 'batches.meta')
+            with open(label_names_path, 'rb') as fr:
+                labels = pickle.load(fr, encoding='bytes')
+                self.label_names = [i.decode('utf-8') for i in labels['label_names']]
 
     @staticmethod
     def one_hot(labels, num_class, dtype=np.float32):

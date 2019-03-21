@@ -1,4 +1,4 @@
 .idea/
-data/
+data/cifar-10/
 __pycache__/
 .DS_Store

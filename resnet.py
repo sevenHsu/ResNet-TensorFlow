@@ -8,7 +8,7 @@ import os
 import config
 import tensorflow as tf
 from data_loader import batch_itr
-from evaluate import accuracy, F1_score
+from evaluate import accuracy, f1_score
 
 
 class ResNet(object):
@@ -58,6 +58,7 @@ class ResNet(object):
         self.input_x = tf.placeholder(tf.float32, shape=[None, self.height, self.width, self.channel], name='input_x')
         self.input_y = tf.placeholder(tf.float32, shape=[None, self.num_classes], name='input_y')
         self.prediction = None
+        self.probability = None
         self.loss = None
         self.acc = None
         self.global_step = None
@@ -80,8 +81,10 @@ class ResNet(object):
         logits = tf.layers.dense(inputs=x, units=self.num_classes, kernel_initializer=fc_W, name='dense_layer')
         # computer prediction
         self.prediction = tf.argmax(logits, axis=-1)
+        # probability
+        self.probability = tf.reduce_max(logits, axis=-1)
         # compute accuracy
-        self.acc = accuracy(logits, self.input_y)
+        self.acc = accuracy(self.prediction, self.input_y)
         # loss function
         self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.input_y))
         # global steps
@@ -188,6 +191,7 @@ class ResNet(object):
         # start training
         for epoch in range(self.epoch):
             for x, y in batch_itr(train_data, self.batch_size):
+                train_steps += 1
                 feed_dict = {self.input_x: x, self.input_y: y}
                 _, train_loss, train_acc = sess.run([self.optimizer, self.loss, self.acc], feed_dict=feed_dict)
                 if train_steps % 1 == 0:

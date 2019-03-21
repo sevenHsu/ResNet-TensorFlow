@@ -20,7 +20,7 @@ learning_rate = 0.001  # initial learning rate
 learning_decay_rate = 0.95  # decay rate of learning rate
 learning_decay_steps = 1000  # decay steps of learning rate
 epoch = 50  # training epochs
-batch_size = 16  # batch size
+batch_size = 32  # batch size
 model_path = "./models/"  # directory path for saving trained models
 summary_path = "./summary/"  # directory path for saving training logs
 # ===========================================
