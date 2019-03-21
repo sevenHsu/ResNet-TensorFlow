@@ -18,7 +18,7 @@ ResNet implementation with TensorFlow
 # environment
 - python3+
 - tensorflow1.1+
-- you need to install require third packages for this project with
+- you need to install third packages required in this project with
    ```python
    pip/pip3/conda install -r requirements.txt
    ```
