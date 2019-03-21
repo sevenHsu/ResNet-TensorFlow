@@ -6,10 +6,8 @@
 """
 import os
 import config
-import random
-import numpy as np
 import tensorflow as tf
-from data_loader import DataLoader
+from data_loader import batch_itr
 from evaluate import accuracy, F1_score
 
 
@@ -64,7 +62,6 @@ class ResNet(object):
         self.acc = None
         self.global_step = None
         self.optimizer = None
-        self.data_loader = DataLoader()
         self.model()
 
     def model(self):
@@ -119,7 +116,8 @@ class ResNet(object):
                         layer_strides = block_strides if layer < 1 else 1
                         activation = True if layer < 2 else False
                         layer_name = block_name + '_layer_%s' % layer
-                        input_x = self.conv(x=input_x, filters_out=filters, k_size=k_size, strides=layer_strides, activation=activation, name=layer_name)
+                        input_x = self.conv(x=input_x, filters_out=filters, k_size=k_size, strides=layer_strides,
+                                            activation=activation, name=layer_name)
                 else:
                     for layer in range(2):
                         filters = self.filter_out[stack]
@@ -127,7 +125,8 @@ class ResNet(object):
                         layer_strides = block_strides if layer < 1 else 1
                         activation = True if layer < 1 else False
                         layer_name = block_name + '_layer_%s' % layer
-                        input_x = self.conv(x=input_x, filters_out=filters, k_size=k_size, strides=layer_strides, activation=activation, name=layer_name)
+                        input_x = self.conv(x=input_x, filters_out=filters, k_size=k_size, strides=layer_strides,
+                                            activation=activation, name=layer_name)
                 # Adding shortcut and outputs of last layer
                 shortcut_depth = shortcut.get_shape()[-1]
                 input_x_depth = input_x.get_shape()[-1]
@@ -136,7 +135,8 @@ class ResNet(object):
                         connect_k_size = 1
                         connect_strides = block_strides
                         connect_filter = filters
-                        shortcut = self.conv(x=shortcut, filters_out=connect_filter, k_size=connect_k_size, strides=connect_strides, activation=False, name=block_name + '_shortcut')
+                        shortcut = self.conv(x=shortcut, filters_out=connect_filter, k_size=connect_k_size,
+                                             strides=connect_strides, activation=False, name=block_name + '_shortcut')
                     input_x = tf.nn.relu(shortcut + input_x, name=block_name + '_shortcut_connect')
 
         return input_x
@@ -152,7 +152,8 @@ class ResNet(object):
         :param name: the name of layer
         :return: output feature map
         """
-        x = tf.layers.conv2d(x, filters=filters_out, kernel_size=k_size, strides=strides, padding='same', name=name + '_conv')
+        x = tf.layers.conv2d(x, filters=filters_out, kernel_size=k_size, strides=strides, padding='same',
+                             name=name + '_conv')
         x = tf.layers.batch_normalization(x, name=name + '_BN')
         if activation:
             x = tf.nn.relu(x, name=name + '_relu')
@@ -184,23 +185,20 @@ class ResNet(object):
         writer = tf.summary.FileWriter(self.summary_path, sess.graph)
         saver = tf.train.Saver(max_to_keep=10)
         sess.run(tf.global_variables_initializer())
+        # start training
         for epoch in range(self.epoch):
-            # shuffle train_date
-            shuffle_id_list = random.sample(train_id_list.tolist(), len(train_id_list))
-            batch_num = int(np.ceil(len(shuffle_id_list) / self.batch_size))
-            train_id_batch = np.array_split(shuffle_id_list, batch_num)
-            for i in range(batch_num):
-                this_batch = train_id_batch[i]
-                batch_img, batch_label = self.data_loader.get_batch_data(this_batch)
-                train_steps += 1
-                feed_dict = {self.input_x: batch_img, self.input_y: batch_label}
+            for x, y in batch_itr(train_data, self.batch_size):
+                feed_dict = {self.input_x: x, self.input_y: y}
                 _, train_loss, train_acc = sess.run([self.optimizer, self.loss, self.acc], feed_dict=feed_dict)
                 if train_steps % 1 == 0:
-                    val_loss, val_acc = sess.run([self.loss, self.acc], feed_dict={self.input_x: valid_img, self.input_y: valid_label})
+                    val_loss, val_acc = sess.run([self.loss, self.acc],
+                                                 feed_dict={self.input_x: valid_data['data'],
+                                                            self.input_y: valid_data['labels']})
                     msg = 'epoch:%s | steps:%s | train_loss:%.4f | val_loss:%.4f | train_acc:%.4f | val_acc:%.4f' % (
                         epoch, train_steps, train_loss, val_loss, train_acc, val_acc)
                     print(msg)
-                    summary = sess.run(merged, feed_dict={self.input_x: valid_img, self.input_y: valid_label})
+                    summary = sess.run(merged,
+                                       feed_dict={self.input_x: valid_data['data'], self.input_y: valid_data['labels']})
                     writer.add_summary(summary, global_step=train_steps)
                     if val_acc >= best_valid_acc:
                         best_valid_acc = val_acc
