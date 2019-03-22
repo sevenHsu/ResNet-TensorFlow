@@ -7,15 +7,17 @@
 import tensorflow as tf
 
 
-def accuracy(prediction, labels):
+def accuracy(logits, labels):
     """
     compute accuracy
-    :param prediction: predict value.[ndarray([])(batch_size,1)]
+    :param logits: output of dense layer.[ndarray([])(batch_size,num_class)]
     :param labels: ground truth.[ndarray([])(batch_size,num_classes)]
     :return: accuracy
     """
-    correct_prediction = tf.equal(tf.argmax(labels, -1), prediction)
-    acc = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
+    with tf.name_scope("accuracy"):
+        y_pred = tf.argmax(tf.nn.softmax(logits), 1, name="pred")
+        correct_pred = tf.equal(tf.argmax(labels, 1), y_pred)
+        acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name="accuracy")
     return acc
 
 

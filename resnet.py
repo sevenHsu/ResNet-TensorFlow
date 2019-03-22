@@ -71,7 +71,7 @@ class ResNet(object):
         :return:
         """
         # first convolution layers
-        x = self.conv(x=self.input_x, k_size=7, filters_out=64, strides=2, activation=True, name='First_Conv')
+        x = self.conv(x=self.input_x, k_size=3, filters_out=64, strides=2, activation=True, name='First_Conv')
         x = tf.layers.max_pooling2d(x, pool_size=[3, 3], strides=2, padding='same', name='max_pool')
         # stack blocks
         x = self.stack_block(x)
@@ -82,9 +82,9 @@ class ResNet(object):
         # computer prediction
         self.prediction = tf.argmax(logits, axis=-1)
         # probability
-        self.probability = tf.reduce_max(logits, axis=-1)
+        self.probability = tf.reduce_max(tf.nn.softmax(logits), axis=-1)
         # compute accuracy
-        self.acc = accuracy(self.prediction, self.input_y)
+        self.acc = accuracy(logits, self.input_y)
         # loss function
         self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.input_y))
         # global steps
@@ -210,6 +210,23 @@ class ResNet(object):
 
         sess.close()
 
+    def test(self, test_data):
+        """
+        testing
+        :param test_data: icontain training data and GT labels
+        :return: predict value with shape[N,1],(np.ndarray)
+        """
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+        saver = tf.train.Saver(tf.global_variables())
+        ckpt = tf.train.get_checkpoint_state(self.model_path)
+        saver.restore(sess, ckpt.model_checkpoint_path)
+        feed_dict = {self.input_x: test_data['data'], self.input_y: test_data['labels']}
+        _, acc = sess.run([self.prediction, self.acc], feed_dict=feed_dict)
+
+        sess.close()
+        return acc
+
     def predict(self, x):
         """
         predicting
@@ -221,5 +238,7 @@ class ResNet(object):
         saver = tf.train.Saver(tf.global_variables())
         ckpt = tf.train.get_checkpoint_state(self.model_path)
         saver.restore(sess, ckpt.model_checkpoint_path)
-        prediction = sess.run(self.prediction, feed_dict={self.input_x: x})
-        return prediction
+        prediction, probability = sess.run([self.prediction, self.probability], feed_dict={self.input_x: x})
+
+        sess.close()
+        return prediction[0], probability[0]

@@ -67,7 +67,7 @@ class DataLoader(object):
             label_names_path = os.path.join(self.data_path, 'batches.meta')
             with open(label_names_path, 'rb') as fr:
                 labels = pickle.load(fr, encoding='bytes')
-                self.label_names = [i.decode('utf-8') for i in labels['label_names']]
+                self.label_names = [i.decode('utf-8') for i in labels[b'label_names']]
 
     @staticmethod
     def one_hot(labels, num_class, dtype=np.float32):

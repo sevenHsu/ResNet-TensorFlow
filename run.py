@@ -40,8 +40,7 @@ def test():
     data_loader = DataLoader()
     # load test data
     data_loader.load_data('test')
-    prediction = resnet.predict(data_loader.test_data['data'])
-    acc = accuracy(prediction, data_loader.test_data['labels'])
+    acc = resnet.test(data_loader.test_data)
     test_data_size = len(data_loader.test_data['labels'])
     msg = "test data size:%s | test accuracy:%s" % (test_data_size, acc)
     print(msg)
@@ -56,25 +55,26 @@ def predict(img_path):
     # open image file
     img = Image.open(img_path)
     img = img.resize((config.width, config.height))
+    img = img.convert('RGB')
     img = np.array(img, dtype=np.float32).transpose([1, 0, 2])
-    img = [img]
+    img = [img / 128 - 1]
     # initialize model
     resnet = ResNet()
     # initialize DataLoader
     data_loader = DataLoader()
     # load label names
     data_loader.load_data('label_names')
-    prediction = resnet.predict(img)[0]
-    probability = resnet.probability[0]
+    prediction, probability = resnet.predict(img)
     msg = 'prediction:%s | probability:%s' % (data_loader.label_names[prediction], probability)
     print(msg)
 
 
 if __name__ == '__main__':
     parse = argparse.ArgumentParser(description="ResNet training /testing /predicting")
-    parse.add_argument('-op', '--operation', default='predict', choices=['train', 'test', 'predict'], required=True,
+    parse.add_argument('-op', '--operation', default='train', choices=['train', 'test', 'predict'], required=False,
                        help="operation should be in ['train', 'test', 'predict']")
-    parse.add_argument('-img', '--image', default='./test_images/01.jpg', help="required if do predict operation ")
+    parse.add_argument('-img', '--image', default='./data/test_images/ship.png',
+                       help="required if do predict operation ")
     args = parse.parse_args()
     if args.operation == 'train':
         train()
