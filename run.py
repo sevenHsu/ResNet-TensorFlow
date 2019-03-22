@@ -71,7 +71,7 @@ def predict(img_path):
 
 if __name__ == '__main__':
     parse = argparse.ArgumentParser(description="ResNet training /testing /predicting")
-    parse.add_argument('-op', '--operation', default='train', choices=['train', 'test', 'predict'], required=False,
+    parse.add_argument('-op', '--operation', default='predict', choices=['train', 'test', 'predict'], required=False,
                        help="operation should be in ['train', 'test', 'predict']")
     parse.add_argument('-img', '--image', default='./data/test_images/ship.png',
                        help="required if do predict operation ")
