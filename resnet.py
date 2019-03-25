@@ -71,7 +71,7 @@ class ResNet(object):
         :return:
         """
         # first convolution layers
-        x = self.conv(x=self.input_x, k_size=3, filters_out=64, strides=2, activation=True, name='First_Conv')
+        x = self.conv(x=self.input_x, k_size=7, filters_out=64, strides=2, activation=True, name='First_Conv')
         x = tf.layers.max_pooling2d(x, pool_size=[3, 3], strides=2, padding='same', name='max_pool')
         # stack blocks
         x = self.stack_block(x)
