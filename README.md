@@ -29,7 +29,20 @@
 - python run.py -op {train,test,predict} -img img_path(only required when -op predict)
 - you can reset super parameters in script named 'config.py'
 ## Experiment
-- coming soon
+> I trained cifar-10 dataset for 5 iterations about 10 minutes with GPU(2080Ti).I did not using randomly crop for training,
+>so the accuracy of the trained ResNet not good.
+
+![airplane](/predict_images/airplane.png)
+
+![bird](/predict_images/bird.png)
+
+![car](/predict_images/car.png)
+
+![deer](/predict_images/deer.png)
+
+![dog](/predict_images/dog.png)
+
+you can see more predictions in the directory [predict_images](/predict_images) 
 ## Reference
 - [ResNet](https://arxiv.org/abs/1512.03385v1)
 - [My Blog](https://sevenhsu.github.io/2019/03/22/2019_03_19_10/)
